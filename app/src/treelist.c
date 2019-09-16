@@ -67,6 +67,15 @@ Ptreelist treelist_create_all(int *key, int all_num)
 	return list;
 }
 
+int treelist_get_hight(Ptreelist list)
+{
+	if(list == NULL)
+		return 0;
+	int left = treelist_get_hight(list->left);
+	int right = treelist_get_hight(list->right);
+	return (left>right)?(left+1):(right+1);
+}
+
 //前序遍历
 //输出根节点的关键之值位于关键字的左子树和右子树之前
 void treelist_preorder(Ptreelist list)
@@ -107,6 +116,7 @@ void treelist_postorder(Ptreelist list)
 	}
 }
 
+#if 0
 Ptreelist treelist_find_max_min(Ptreelist head, TREELIST_MAIN_MIN_NUM flag)
 {
 	if(head == NULL)
@@ -138,6 +148,27 @@ Ptreelist treelist_find_max_min(Ptreelist head, TREELIST_MAIN_MIN_NUM flag)
 	printf("head->key = %d\n", head->key);
 	return head;
 }
+#endif
+
+Ptreelist treelist_find_pre(Ptreelist head)
+{
+	if(head != NULL && head->right != NULL)
+	{
+		//找到当前节点的最小节点
+		return treelist_find_pre(head->right);
+	}
+	return head;
+}
+
+Ptreelist treelist_find_post(Ptreelist head)
+{
+	if(head != NULL && head->left != NULL)
+	{
+		//找到当前节点的最小节点
+		return treelist_find_post(head->left);
+	}
+	return head;
+}
 
 //查找树的前驱或者后继
 /*
@@ -145,9 +176,9 @@ Ptreelist treelist_find_max_min(Ptreelist head, TREELIST_MAIN_MIN_NUM flag)
 
    结点node的后继结点是所有键值大于node的结点中的最小结点，也就是node的右子树的最小结点
 */
-Ptreelist treelist_find_PRE_POST(Ptreelist head, TREELIST_ENUM flag)
+Ptreelist treelist_find_pre_post(Ptreelist head, TREELIST_ENUM flag)
 {
-	Ptreelist need_item = NULL;
+	Ptreelist need_item = head;
 	if(head == NULL)
 	{
 		return NULL;
@@ -160,18 +191,8 @@ Ptreelist treelist_find_PRE_POST(Ptreelist head, TREELIST_ENUM flag)
 			{
 				if(head->left != NULL)
 				{
-					//找到左子树中的最大节点
-					need_item = treelist_find_max_min(head->left, TREELIST_MAX);
-				}
-				else
-				{
-					//如果没有左子树,那么就向上查找到其父节点有右孩子并且是父节点的右子树的节点
-					need_item = head->parent;
-					while(need_item != NULL && head == need_item->left)
-					{
-						head = head->parent;
-						need_item = head->parent;
-					}
+					//找到当前节点的最大节点
+					need_item = treelist_find_pre(head->left);
 				}
 			}
 			break;
@@ -182,18 +203,8 @@ Ptreelist treelist_find_PRE_POST(Ptreelist head, TREELIST_ENUM flag)
 				//如果head的右子树为NULL,那么从右子树中找到最左的点
 				if(head->right != NULL)
 				{
-					//找到右子树中的最小节点
-					need_item = treelist_find_max_min(head->right, TREELIST_MIN);
-				}
-				else
-				{
-					//如果没有右子树,那么就向上查找到其父节点有左孩子并且是父节点的左子树的节点
-					need_item = head->parent;
-					while(need_item != NULL && head == need_item->right)
-					{
-						head = head->parent;
-						need_item = head->parent;
-					}
+					//找到当前节点的最小节点
+					need_item = treelist_find_post(head->right);
 				}
 			}
 			break;
@@ -236,7 +247,7 @@ static Ptreelist treelist_del_item(Ptreelist head, Ptreelist del_item)
 			if(del_item->left != NULL && del_item->right != NULL)
 			{
 				//要求找到删除节点的后继节点,替换为当前节点,找到的节点,要把父节点的左子树置NULL
-				child_item = treelist_find_PRE_POST(del_item, TREELIST_POST);
+				child_item = treelist_find_pre_post(del_item, TREELIST_POST);
 				printf("child_item->key = %d, del_item->key = %d, del_item->right->key = %d\n", child_item->key, del_item->key, del_item->right->key);
 				//如果刚好这个是删除节点的右子树,那么右子树不变,否则给为原来的右子树
 				child_item->left = del_item->left;
